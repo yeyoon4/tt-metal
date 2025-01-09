@@ -30,10 +30,10 @@ class ModelMode(IntEnum):
 
 @dataclass
 class ModelArgs:
-    d_model: int
+    d_model: int # model dimension
     n_layer: int
     vocab_size: int
-    d_state: int = 16
+    d_state: int = 16 # state expansion factor => N
     expand: int = 2
     dt_rank: int = 0
     d_conv: int = 4

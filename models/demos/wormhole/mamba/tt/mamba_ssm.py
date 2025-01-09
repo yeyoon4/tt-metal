@@ -20,10 +20,10 @@ class TtMambaSSM(torch.nn.Module):
 
         # hidden state
         self.batch_size = args.batch_size
-        self.hidden_size = args.d_inner
+        self.hidden_size = args.d_inner # D
         self.configs = configs
         self.n = 32
-        self.rank = self.args.dt_rank
+        self.rank = self.args.dt_rank 
 
         """
         We need to split up the x_proj weights because in the reference
@@ -38,16 +38,16 @@ class TtMambaSSM(torch.nn.Module):
         # delta_t_proj_weights
         self.delta_t_proj_weights = load_fn(
             x_proj_weight_name,
-            lambda x: x[: self.args.dt_rank, :].transpose(-1, -2),
+            lambda x: x[: self.args.dt_rank, :].transpose(-1, -2), # 마지막 두 차원을 transpose
             postfix="delta_t",
             tt_dtype=self.configs["dtype"]["weights"],
         )
 
         # B_proj_weights
         def preprocess_B(x):
-            x = x[self.args.dt_rank : (self.args.dt_rank + self.args.d_state), :]
-            x = x.transpose(-1, -2)
-            x = torch.nn.functional.pad(x, (0, 16), "constant", 0)
+            x = x[self.args.dt_rank : (self.args.dt_rank + self.args.d_state), :] # dt_rank부터 d_state까지 slicing
+            x = x.transpose(-1, -2) # 마지막 두 차원을 transpose
+            x = torch.nn.functional.pad(x, (0, 16), "constant", 0) # padding: (패딩을 적용할 tensor, 패딩 크기(첫 번째 차원, 두 번째 차원), 패딩 모드, 패딩 값) -> 마지막 차원에 16개의 0을 추가
             return x
 
         self.B_proj_weights = load_fn(
@@ -59,7 +59,7 @@ class TtMambaSSM(torch.nn.Module):
 
         # C_proj_weights
         def preprocess_C(x):
-            x = x[(self.args.dt_rank + self.args.d_state) :, :].transpose(-1, -2)
+            x = x[(self.args.dt_rank + self.args.d_state) :, :].transpose(-1, -2) # dt_rank + d_state부터 끝까지 slicing
             x = torch.nn.functional.pad(x, (0, 16), "constant", 0)
             return x
 
@@ -256,12 +256,12 @@ class TtMambaSSM(torch.nn.Module):
             bmulx0_sharded = ttnn.to_memory_config(bmulx0, self.configs["sharded_scan"])
             ttnn.deallocate(bmulx0)
             hidden_states_sharded = ttnn.experimental.prefix_scan(
-                abar2_sharded,
-                bmulx0_sharded,
-                prev_hidden_state,
+                abar2_sharded, # a
+                bmulx0_sharded, # bx
+                prev_hidden_state, # h_prev
                 memory_config=self.configs["sharded_scan"],
                 dtype=ttnn.bfloat8_b,
-                math_fidelity=ttnn.MathFidelity.HiFi3,
+                math_fidelity=ttnn.MathFidelity.HiFi3, # 정밀도
             )
             ttnn.deallocate(abar2_sharded)
             ttnn.deallocate(bmulx0_sharded)
