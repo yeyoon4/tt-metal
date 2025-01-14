@@ -45,9 +45,9 @@ FORCE_INLINE void pack_block_rows_into_tiles(uint32_t cb_in, uint32_t cb_out, ui
     untilize_uninit(cb_in);
 }
 
-// This function relies on tilizing NUM_TILES_IN_TILIZED_CHUNK tiles so we pad up to that amount
+// This function relies on tilizing NUM_TILES_IN_TILIZED_CHUNK tiles so we pad up to that amount 
 FORCE_INLINE void pack_block_tiles_into_rows(uint32_t cb_in, uint32_t cb_out, uint32_t num_tiles) {
-    reconfig_data_format_srca(cb_in);
+    reconfig_data_format_srca(cb_in); // reconfigure data format for srcA
     pack_reconfig_data_format(cb_out);
 
     tilize_init_short(cb_in, NUM_TILES_IN_TILIZED_CHUNK);
@@ -127,11 +127,11 @@ FORCE_INLINE void copy(uint32_t cb_in, uint32_t cb_out, uint32_t num_input_units
     cb_push_back(cb_out, 1);
 }
 
-FORCE_INLINE void compute_ht(uint32_t cb_a, uint32_t cb_bx, uint32_t cb_out, uint32_t num_tiles) {
+FORCE_INLINE void compute_ht(uint32_t cb_a, uint32_t cb_bx, uint32_t cb_out, uint32_t num_tiles) { // cb_a = a, cb_bx = bx
     for (uint32_t idx = 0; idx < num_tiles; idx++) {
-        mul(cb_a, cb_h_prev, cb_ah);
-        sum(cb_ah, cb_bx, cb_h);
-        copy(cb_h, cb_h_prev);
+        mul(cb_a, cb_h_prev, cb_ah); // ah = a * h_prev
+        sum(cb_ah, cb_bx, cb_h); // h = ah + bx
+        copy(cb_h, cb_h_prev); // 
         copy(cb_h, cb_out);  // TODO: Get rid of this extraneous copy
         cb_pop_front(cb_h, 1);
     }
@@ -166,7 +166,7 @@ void MAIN {
     for (uint32_t row_idx = 0; row_idx < total_tiles_per_col; row_idx++) {
         for (uint32_t tilized_chunk_idx = 0; tilized_chunk_idx < num_chunks_per_row; tilized_chunk_idx++) {
             // Load the last row from the hidden state above this row
-            copy(cb_h_acc, cb_h_prev);
+            copy(cb_h_acc, cb_h_prev); 
             cb_pop_front(cb_h_acc, 1);
 
             // If we don't have a full chunk (NUM_TILES_IN_TILIZED_CHUNK tiles) we should figure out how many tiles we
