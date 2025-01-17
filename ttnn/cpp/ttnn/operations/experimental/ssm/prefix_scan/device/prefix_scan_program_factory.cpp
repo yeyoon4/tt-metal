@@ -57,7 +57,7 @@ operation::ProgramWithCallbacks multi_core_ssm_prefix_scan(
 
     // One chunk is a row of 32 tiles where an untilize call will move each row into a seperate tile
     constexpr uint32_t num_tiles_in_chunk = 32;
-    const uint32_t num_chunks_per_row = tt::div_up(total_tiles_per_row, num_tiles_in_chunk);
+    const uint32_t num_chunks_per_row = tt::div_up(total_tiles_per_row, num_tiles_in_chunk); // row 당 chunk의 수 = total_tiles_per_row / num_tiles_in_chunk (32)
 
     const uint32_t cb_a_in_id = tt::CBIndex::c_0;
     const auto cb_a_in = create_circular_buffer(cb_a_in_id, total_tiles, input_tile_size, input_format, a_buffer);
@@ -98,6 +98,8 @@ operation::ProgramWithCallbacks multi_core_ssm_prefix_scan(
     const uint32_t cb_h_acc_id = tt::CBIndex::c_31;
     const auto cb_h_acc =
         create_circular_buffer(cb_h_acc_id, num_chunks_per_row, intermediary_tile_size, intermediary_format);
+    // create_circular_buffer(index, num_tiles, tile_size, format, buffer)
+    // h_acc은 hidden state의 마지막 행을 저장하는데 사용됨
 
     std::vector<uint32_t> reader_compile_time_args = {cb_a_in_id, cb_bx_in_id, cb_h_in_id};
     std::vector<uint32_t> writer_compile_time_args = {cb_out_id, cb_h_acc_id, cb_h_in_id};

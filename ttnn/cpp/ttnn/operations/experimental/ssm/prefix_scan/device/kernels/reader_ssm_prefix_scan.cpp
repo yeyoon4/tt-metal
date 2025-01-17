@@ -14,6 +14,7 @@ void kernel_main() {
     constexpr uint32_t cb_bx_in = get_compile_time_arg_val(1);
     constexpr uint32_t cb_h_in = get_compile_time_arg_val(2);
 
+    // cb_push_back(cb_id, num_tiles) 
     cb_push_back(cb_a_in, num_tiles_per_core);
     cb_push_back(cb_bx_in, num_tiles_per_core);
     cb_push_back(cb_h_in, total_tiles_per_row);

@@ -23,7 +23,8 @@ ttnn::Tensor ExecutePrefixScan::invoke(
         memory_config.value_or(a.memory_config()),
         dtype.value_or(a.dtype()),
         math_fidelity.value_or(MathFidelity::HiFi4)};
-    return operation::run(program, {a, bx, h_prev}, {}, {}, queue_id).at(0);
+    return operation::run(program, {a, bx, h_prev}, {}, {}, queue_id).at(0); // at(0) 결과값의 첫 번째 항목을 반환
+    // run(operation, input tensors, optional input tensors, output tensors, queue_id)
 }
 
 ttnn::Tensor ExecutePrefixScan::invoke(

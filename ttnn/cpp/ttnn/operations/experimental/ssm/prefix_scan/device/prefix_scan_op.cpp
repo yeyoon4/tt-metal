@@ -16,6 +16,9 @@ void PrefixScan::validate(const std::vector<Tensor>& input_tensors) const {
 
     const auto& a = input_tensors[0];
     const auto& bx = input_tensors[1];
+    // 1. a와 bx의 데이터 타입이 같아야 함
+    // 2. a와 bx의 layout이 TILE이어야 함
+    // 3. a와 bx의 shape이 같아야 함 -> 4차원이어야 함 + 0, 1번째 차원이 1이어야 함 + 2번째 차원이 32의 배수여야 함
     TT_FATAL(a.dtype() == bx.dtype(), "Expected input tensors to have the same data type");
     TT_FATAL(a.layout() == Layout::TILE && bx.layout() == Layout::TILE, "Expected input tensors to be tile layout");
     TT_FATAL(a.get_legacy_shape() == bx.get_legacy_shape(), "Expected input tensors to have the same shape");
@@ -26,7 +29,9 @@ void PrefixScan::validate(const std::vector<Tensor>& input_tensors) const {
     TT_FATAL(
         shape[2] >= tt::constants::TILE_HEIGHT && shape[2] % tt::constants::TILE_HEIGHT == 0,
         "Sequence length should be a multiple of 32");
-
+    
+    // 4. h_prev의 데이터 타입이 BFLOAT16이어야 함
+    // 5. h_prev의 layout이 ROW_MAJOR이어야 함
     const auto& h = input_tensors.at(2);
     TT_FATAL(h.dtype() == DataType::BFLOAT16, "Expected initial hidden state to be bfloat16");
     TT_FATAL(h.layout() == Layout::ROW_MAJOR, "Expected initial hidden state to be row-major");
@@ -46,6 +51,7 @@ void PrefixScan::validate(const std::vector<Tensor>& input_tensors) const {
         "Expected h tensor to be row major orientation");
 }
 
+// output tensor는 input tensor와 동일한 shape이어야 함
 std::vector<tt::tt_metal::LegacyShape> PrefixScan::compute_output_shapes(
     const std::vector<Tensor>& input_tensors) const {
     const auto& a = input_tensors.at(0);

@@ -107,6 +107,7 @@ FORCE_INLINE void sum(uint32_t cb_a, uint32_t cb_b, uint32_t cb_out) {
     cb_pop_front(cb_b, 1);
 }
 
+// cb_out에 cb_in의 데이터를 복사
 FORCE_INLINE void copy(uint32_t cb_in, uint32_t cb_out, uint32_t num_input_units = 1) {
     reconfig_data_format_srca(cb_in);
     pack_reconfig_data_format(cb_out);
@@ -158,7 +159,7 @@ void MAIN {
     for (uint32_t tilized_chunk_idx = 0; tilized_chunk_idx < num_chunks_per_row; tilized_chunk_idx++) {
         const uint32_t remaining_tiles_in_chunk =
             tilized_chunk_idx == num_chunks_per_row - 1 ? num_tiles_last_chunk : NUM_TILES_IN_TILIZED_CHUNK;
-        copy(cb_h_in, cb_h_acc, remaining_tiles_in_chunk);
+        copy(cb_h_in, cb_h_acc, remaining_tiles_in_chunk); // cb_h_acc에 cb_h_in의 데이터 복사
         cb_pop_front(cb_h_in, remaining_tiles_in_chunk);
     }
 
@@ -166,7 +167,7 @@ void MAIN {
     for (uint32_t row_idx = 0; row_idx < total_tiles_per_col; row_idx++) {
         for (uint32_t tilized_chunk_idx = 0; tilized_chunk_idx < num_chunks_per_row; tilized_chunk_idx++) {
             // Load the last row from the hidden state above this row
-            copy(cb_h_acc, cb_h_prev); 
+            copy(cb_h_acc, cb_h_prev); // cb_h_prev에 cb_h_acc의 데이터 복사
             cb_pop_front(cb_h_acc, 1);
 
             // If we don't have a full chunk (NUM_TILES_IN_TILIZED_CHUNK tiles) we should figure out how many tiles we
