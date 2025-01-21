@@ -13,10 +13,10 @@ namespace ttnn::operations::experimental::ssm::detail {
 using namespace tt::constants;
 
 operation::ProgramWithCallbacks multi_core_ssm_prefix_scan(
-    const Tensor& a,
-    const Tensor& bx,
-    const Tensor& h,
-    Tensor& output,
+    const Tensor& a, // abar2_sharded
+    const Tensor& bx, // bmulx0_sharded
+    const Tensor& h, // prev_hidden_state
+    Tensor& output, 
     MathFidelity math_fidelity,
     CoreCoord compute_with_storage_grid_size) {
     tt::tt_metal::Program program = tt::tt_metal::CreateProgram();
@@ -28,13 +28,13 @@ operation::ProgramWithCallbacks multi_core_ssm_prefix_scan(
     TT_ASSERT(output_buffer != nullptr, "Output buffer should be allocated on device");
 
     const tt::DataFormat input_format = tt::tt_metal::datatype_to_dataformat_converter(a.get_dtype());
-    const uint32_t input_tile_size = tt::tt_metal::detail::TileSize(input_format);
+    const uint32_t input_tile_size = tt::tt_metal::detail::TileSize(input_format); // bfloat8_b의 tile size = (256 * 4) + (16 * 4) = 1024 + 64 = 1088
 
     const tt::DataFormat intermediary_format = tt::DataFormat::Float16_b;
     const uint32_t intermediary_row_size = tt::datum_size(intermediary_format) * TILE_WIDTH;
-    const uint32_t intermediary_tile_size = tt::tt_metal::detail::TileSize(intermediary_format);
+    const uint32_t intermediary_tile_size = tt::tt_metal::detail::TileSize(intermediary_format); // Float16_b의 tile size = 1024 * 2 = 2048
 
-    const auto all_cores = a.shard_spec()->grid;
+    const auto all_cores = a.shard_spec()->grid; // (8, 8) = 64개의 core
     const auto create_circular_buffer = [&program, &all_cores](
                                             uint32_t index,
                                             uint32_t num_tiles,
@@ -49,15 +49,15 @@ operation::ProgramWithCallbacks multi_core_ssm_prefix_scan(
     };
 
     const uint32_t sharded_sequence_length = a.shard_spec()->shape[0];
-    const uint32_t sharded_hidden_state_length = a.shard_spec()->shape[1];
+    const uint32_t sharded_hidden_state_length = a.shard_spec()->shape[1]; // hidden size * 2 * latent = d_model * 2 * 32
 
-    const uint32_t total_tiles_per_row = sharded_hidden_state_length / TILE_HEIGHT;
+    const uint32_t total_tiles_per_row = sharded_hidden_state_length / TILE_HEIGHT; // TILE_HEIGHT = 32 -> d_model * 2
     const uint32_t total_tiles_per_col = sharded_sequence_length / TILE_HEIGHT;
     const uint32_t total_tiles = total_tiles_per_row * total_tiles_per_col;
 
     // One chunk is a row of 32 tiles where an untilize call will move each row into a seperate tile
     constexpr uint32_t num_tiles_in_chunk = 32;
-    const uint32_t num_chunks_per_row = tt::div_up(total_tiles_per_row, num_tiles_in_chunk); // row 당 chunk의 수 = total_tiles_per_row / num_tiles_in_chunk (32)
+    const uint32_t num_chunks_per_row = tt::div_up(total_tiles_per_row, num_tiles_in_chunk); // row 당 chunk의 수 = total_tiles_per_row / num_tiles_in_chunk
 
     const uint32_t cb_a_in_id = tt::CBIndex::c_0;
     const auto cb_a_in = create_circular_buffer(cb_a_in_id, total_tiles, input_tile_size, input_format, a_buffer);

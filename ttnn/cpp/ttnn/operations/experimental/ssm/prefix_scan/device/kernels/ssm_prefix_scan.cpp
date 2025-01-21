@@ -143,8 +143,7 @@ FORCE_INLINE void compute_ht(uint32_t cb_a, uint32_t cb_bx, uint32_t cb_out, uin
     cb_pop_front(cb_h_prev, 1);
 }
 
-namespace NAMESPACE {
-void MAIN {
+ void MAIN {
     const uint32_t total_tiles = get_arg_val<uint32_t>(0);
     const uint32_t total_tiles_per_row = get_arg_val<uint32_t>(1);
     const uint32_t total_tiles_per_col = get_arg_val<uint32_t>(2);
