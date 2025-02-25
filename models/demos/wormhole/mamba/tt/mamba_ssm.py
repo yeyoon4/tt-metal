@@ -22,8 +22,8 @@ class TtMambaSSM(torch.nn.Module):
         self.batch_size = args.batch_size
         self.hidden_size = args.d_inner
         self.configs = configs
-        self.n = 32
-        self.rank = self.args.dt_rank
+        self.n = 32 # N
+        self.rank = self.args.dt_rank 
 
         """
         We need to split up the x_proj weights because in the reference
@@ -109,11 +109,11 @@ class TtMambaSSM(torch.nn.Module):
         self.D = self.D_prefill
 
         # hidden state
-        prev_hidden_states = torch.zeros((1, 1, self.batch_size, self.hidden_size * self.n))
+        prev_hidden_states = torch.zeros((1, 1, self.batch_size, self.hidden_size * self.n)) # (1, 1, B, D * N)
         self.tt_hidden_states = load_fn(
             f"tt_hidden_state_{self.batch_size}", torch_tensor=prev_hidden_states, tt_layout=ttnn.TILE_LAYOUT
         )
-        self.hidden_state_cache = TensorCache(self.configs["num_users"], 1, self.hidden_size * self.n, device)
+        self.hidden_state_cache = TensorCache(self.configs["num_users"], 1, self.hidden_size * self.n, device) # (32, 1, D * N, device) -> (num_users, entries per user, entry size, device)
 
         self.compute_kernel_config = ttnn.WormholeComputeKernelConfig(
             math_fidelity=ttnn.MathFidelity.HiFi2,
@@ -248,9 +248,9 @@ class TtMambaSSM(torch.nn.Module):
 
         elif self.configs["mode"] == ModelMode.PREFILL:
             prev_hidden_state = ttnn.to_memory_config(
-                self.hidden_state_cache.get(self.configs["current_user"], 0),
+                self.hidden_state_cache.get(self.configs["current_user"], 0), (# (user_idx, entry_idx)
                 memory_config=self.configs["sharded_prev_hidden"],
-            )
+            ) # (input tensor to be converted, desired memory configuration)
             abar2_sharded = ttnn.to_memory_config(abar2, self.configs["sharded_scan"])
             ttnn.deallocate(abar2)
             bmulx0_sharded = ttnn.to_memory_config(bmulx0, self.configs["sharded_scan"])
