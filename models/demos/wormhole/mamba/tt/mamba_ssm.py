@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import torch
+import time
 
 import ttnn
 from typing import Callable
@@ -255,6 +256,8 @@ class TtMambaSSM(torch.nn.Module):
             ttnn.deallocate(abar2)
             bmulx0_sharded = ttnn.to_memory_config(bmulx0, self.configs["sharded_scan"])
             ttnn.deallocate(bmulx0)
+
+            start_prefix_time = time.time()
             hidden_states_sharded = ttnn.experimental.prefix_scan(
                 abar2_sharded,
                 bmulx0_sharded,
@@ -263,6 +266,8 @@ class TtMambaSSM(torch.nn.Module):
                 dtype=ttnn.bfloat8_b,
                 math_fidelity=ttnn.MathFidelity.HiFi3,
             )
+            end_prefix_time = time.time()
+            print(f"Prefix scan time: {end_prefix_time - start_prefix_time}s")
             ttnn.deallocate(abar2_sharded)
             ttnn.deallocate(bmulx0_sharded)
 

@@ -30,7 +30,7 @@ class PytorchMambaBlock(torch.nn.Module):
 
 
 @pytest.mark.timeout(600)
-@pytest.mark.parametrize("layer", [0])
+@pytest.mark.parametrize("layer", [0])  # 첫 번째 레이어만 테스트
 @pytest.mark.parametrize(
     "use_pretrained_weights",
     [True, False],

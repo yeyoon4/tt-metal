@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import torch
+import time
 
 import ttnn
 from typing import Callable
@@ -118,7 +119,12 @@ class TtMambaBlock(torch.nn.Module):
 
     def forward(self, x):
         assert len(x.shape) == 4, "Mamba block expects inputs to be rank 4"
+        if self.configs["mode"] == ModelMode.PREFILL:
+            print("Mode is prefill")
+        elif self.configs["mode"] == ModelMode.DECODE:
+            print("Mode is decode")
 
+        start_forward_time = time.time()
         residual = ttnn.linear(
             x,
             self.mlp_proj_weights,
@@ -235,6 +241,8 @@ class TtMambaBlock(torch.nn.Module):
             dtype=self.configs["dtype"]["activations"],
         )
         ttnn.deallocate(out)
+        end_forward_time = time.time()
+        print(f"Forward time: {end_forward_time - start_forward_time}s")
 
         return out_proj
 
