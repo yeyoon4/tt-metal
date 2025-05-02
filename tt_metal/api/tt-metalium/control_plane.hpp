@@ -61,9 +61,14 @@ public:
     std::set<chan_id_t> get_active_fabric_eth_channels_in_direction(
         mesh_id_t mesh_id, chip_id_t chip_id, RoutingDirection routing_direction) const;
 
-    eth_chan_directions get_eth_chan_direction(mesh_id_t mesh_id, chip_id_t chip_id, int chan) const;
+    std::set<std::pair<chan_id_t, eth_chan_directions>> get_active_fabric_eth_channels(
+        mesh_id_t mesh_id, chip_id_t chip_id) const;
+
+    void set_routing_mode(uint16_t mode);
+    uint16_t get_routing_mode() const;
 
 private:
+    uint16_t routing_mode_ = 0;  // ROUTING_MODE_UNDEFINED
     std::unique_ptr<RoutingTableGenerator> routing_table_generator_;
     std::vector<std::vector<chip_id_t>> logical_mesh_chip_id_to_physical_chip_id_mapping_;
     // map[mesh_id][chip_id][direction] has a list of ethernet channels in that direction
@@ -92,6 +97,7 @@ private:
 
     // Takes RoutingTableGenerator table and converts to routing tables for each ethernet port
     void convert_fabric_routing_table_to_chip_routing_table();
+    // TODO: remove this converter, we should consolidate the directions here
     eth_chan_directions routing_direction_to_eth_direction(RoutingDirection direction) const;
 };
 

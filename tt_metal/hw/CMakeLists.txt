@@ -28,25 +28,39 @@ set(IRAM_OPTIONS
     ENABLE_IRAM # With IRAM
 )
 
-include(FetchContent)
-# Break out the version setter for access control reasons
-include(cmake/sfpi-version.cmake)
-if(DEFINED SFPI_${CMAKE_HOST_SYSTEM_PROCESSOR}_${CMAKE_HOST_SYSTEM_NAME}_RELEASE)
-    set(SFPI_RELEASE "${SFPI_${CMAKE_HOST_SYSTEM_PROCESSOR}_${CMAKE_HOST_SYSTEM_NAME}_RELEASE}")
-    list(GET SFPI_RELEASE 0 SFPI_FILE)
-    list(GET SFPI_RELEASE 1 SFPI_MD5)
-    FetchContent_Declare(
-        sfpi
-        URL
-            "https://github.com/tenstorrent/sfpi/releases/download/${SFPI_FILE}"
-        URL_HASH "MD5=${SFPI_MD5}"
-        SOURCE_DIR
-        "${PROJECT_SOURCE_DIR}/runtime/sfpi"
-    )
-    FetchContent_MakeAvailable(sfpi)
-else()
-    message(FATAL_ERROR "SFPI binaries for ${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_HOST_SYSTEM_NAME} not available")
+# Get the appropriate SFPI tarball
+file(STRINGS "../sfpi-version.sh" SFPI)
+set(SFPI_arch_os "${CMAKE_HOST_SYSTEM_PROCESSOR}_${CMAKE_HOST_SYSTEM_NAME}")
+foreach(tuple ${SFPI})
+    string(REPLACE "=" ";" pair ${tuple})
+    list(LENGTH pair count)
+    if(count EQUAL 2)
+        list(GET pair 0 key)
+        list(GET pair 1 value)
+        if(key STREQUAL "sfpi_version")
+            set(SFPI_VERSION "${value}")
+        elseif(key STREQUAL "sfpi_url")
+            set(SFPI_URL "${value}")
+        elseif(key STREQUAL "sfpi_${SFPI_arch_os}_tgz_md5")
+            set(SFPI_TGZ_MD5 "${value}")
+        endif()
+    endif()
+endforeach()
+
+if(NOT DEFINED SFPI_TGZ_MD5)
+    message(FATAL_ERROR "SFPI tarball for ${SFPI_arch_os} is not available")
 endif()
+
+include(FetchContent)
+FetchContent_Declare(
+    sfpi
+    URL
+        "${SFPI_URL}/${SFPI_VERSION}/sfpi-${SFPI_arch_os}.tgz"
+    URL_HASH "MD5=${SFPI_TGZ_MD5}"
+    SOURCE_DIR
+    "${PROJECT_SOURCE_DIR}/runtime/sfpi"
+)
+FetchContent_MakeAvailable(sfpi)
 
 foreach(ARCH IN LISTS ARCHS)
     set(DEV_MEM_MAP "${PROJECT_SOURCE_DIR}/tt_metal/hw/inc/${ARCH}/dev_mem_map.h")
@@ -126,6 +140,9 @@ endfunction()
 
 # Define the compiler command
 set(GPP_CMD ${PROJECT_SOURCE_DIR}/runtime/sfpi/compiler/bin/riscv32-unknown-elf-g++)
+
+# May switch to this someday
+# set(GPP_CMD /opt/tenstorrent/sfpi/compiler/bin/riscv32-unknown-elf-g++)
 
 set(GPP_DEFINES -DTENSIX_FIRMWARE)
 
@@ -242,6 +259,7 @@ add_custom_target(
     DEPENDS
         ${PREPROCESSED_LD_FILES}
         ${PREPROCESSED_O_FILES}
+        ${SFPI_VERSION_JSON_PATH}
 )
 
 add_library(hw INTERFACE)

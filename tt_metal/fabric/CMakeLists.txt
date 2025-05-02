@@ -8,6 +8,7 @@ target_sources(
         routing_table_generator.cpp
         mesh_graph.cpp
         erisc_datamover_builder.cpp
+        fabric.cpp
         fabric_host_utils.cpp
 )
 
@@ -22,6 +23,7 @@ target_sources(
             hw/inc/tt_fabric.h
             hw/inc/tt_fabric_interface.h
             hw/inc/eth_chan_noc_mapping.h
+            hw/inc/fabric_routing_mode.h
             hw/inc/edm_fabric/edm_fabric_flow_control_helpers.hpp
             hw/inc/edm_fabric/edm_fabric_utils.hpp
             hw/inc/edm_fabric/edm_fabric_worker_adapters.hpp
