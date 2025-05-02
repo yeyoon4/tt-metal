@@ -110,15 +110,24 @@ buildings, agriculture and land use are among the main sectors causing greenhous
 @pytest.mark.parametrize(
     "model_version, mode, batch, seq_len, num_layers, iterations, pcc",
     (
-        (
-            "state-spaces/mamba-2.8b",
-            ModelMode.PREFILL,
-            1,
-            32,
-            64,
-            1,
-            0.9759,
-        ),
+        # (
+        #     "state-spaces/mamba-2.8b",
+        #     ModelMode.PREFILL,
+        #     1,
+        #     32,
+        #     64, # layer 64
+        #     1,
+        #     0.9759,
+        # ),
+        # (
+        #     "state-spaces/mamba-2.8b",
+        #     ModelMode.PREFILL,
+        #     1,
+        #     128,
+        #     64,
+        #     1,
+        #     0.9604,
+        # ),
         (
             "state-spaces/mamba-2.8b",
             ModelMode.PREFILL,
@@ -127,6 +136,15 @@ buildings, agriculture and land use are among the main sectors causing greenhous
             64,
             1,
             0.9604,
+        ),
+        (
+            "state-spaces/mamba-2.8b",
+            ModelMode.PREFILL,
+            1,
+            32,
+            64,
+            1,
+            0.9759,
         ),
         (
             "state-spaces/mamba-2.8b",

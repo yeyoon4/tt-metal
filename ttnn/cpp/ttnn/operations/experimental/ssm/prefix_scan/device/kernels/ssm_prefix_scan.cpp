@@ -8,6 +8,7 @@
 #include "compute_kernel_api/tile_move_copy.h"
 #include "compute_kernel_api/tilize.h"
 #include "compute_kernel_api/untilize.h"
+#include "debug/dprint.h"
 
 constexpr uint32_t NUM_TILES_IN_TILIZED_CHUNK = 32;
 
@@ -128,13 +129,19 @@ FORCE_INLINE void copy(uint32_t cb_in, uint32_t cb_out, uint32_t num_input_units
 }
 
 FORCE_INLINE void compute_ht(uint32_t cb_a, uint32_t cb_bx, uint32_t cb_out, uint32_t num_tiles) {
+    uint32_t add_count = 0;
+    uint32_t mul_count = 0;
     for (uint32_t idx = 0; idx < num_tiles; idx++) {
         mul(cb_a, cb_h_prev, cb_ah);
+        mul_count++;
         sum(cb_ah, cb_bx, cb_h);
+        add_count++;
         copy(cb_h, cb_h_prev);
         copy(cb_h, cb_out);  // TODO: Get rid of this extraneous copy
         cb_pop_front(cb_h, 1);
     }
+    DPRINT << "prefix scan mul count: " << mul_count << ENDL();
+    DPRINT << "prefix scan add count: " << add_count << ENDL();
     copy(cb_h_prev, cb_h_acc);  // Store the last row of this tile for the next iteration
 
     // Make sure to remove the last hidden state
