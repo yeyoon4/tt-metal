@@ -5,17 +5,17 @@
 #include "tt_metal/impl/event/dispatch.hpp"
 
 #include <boost/core/span.hpp>
-#include <tt-metalium/dispatch_settings.hpp>
 #include <tt_align.hpp>
 #include <utility>
 #include <vector>
 
 #include "assert.hpp"
-#include "command_queue_common.hpp"
 #include "core_coord.hpp"
 #include "device.hpp"
 #include "impl/context/metal_context.hpp"
 #include "dispatch/kernels/cq_commands.hpp"
+#include "dispatch/command_queue_common.hpp"
+#include "dispatch/dispatch_settings.hpp"
 #include "dispatch_core_common.hpp"
 #include "hal_types.hpp"
 #include "logger.hpp"

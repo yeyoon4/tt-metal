@@ -33,7 +33,6 @@
 #include "profiler_state.hpp"
 #include "profiler_types.hpp"
 #include "tt-metalium/program.hpp"
-#include "system_memory_manager.hpp"
 #include "tracy/TracyTTDevice.hpp"
 
 namespace tt {
@@ -243,7 +242,7 @@ void write_control_buffer_to_core(
     const CoreCoord& core,
     const HalProgrammableCoreType core_type,
     const ProfilerDumpState state,
-    std::vector<uint32_t>& control_buffer);
+    const std::vector<uint32_t>& control_buffer);
 
 }  // namespace tt_metal
 

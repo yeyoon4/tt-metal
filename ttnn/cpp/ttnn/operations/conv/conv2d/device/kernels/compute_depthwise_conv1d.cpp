@@ -56,16 +56,16 @@ inline void eltwise_mul_and_add_block_v2(
     uint32_t last_block_idx = total_blocks - 1;
     uint32_t mul_count = 0;
     uint32_t add_count = 0;
-    for (uint32_t i = 0; i < block_num_tiles; i++) {
+    for (uint32_t i = 0; i < block_num_tiles; i++) {  // 80
         cb_wait_front(in1_cb_id, 1);
         cb_wait_front(in0_cb_id, 1);
         cb_reserve_back(eltwise_mul_partials_cb_cb_id, 1);
         mul_tiles_init(in0_cb_id, in1_cb_id);
-        ACQ();
+        ACQ();  // acquire_dst() -> tile register
         mul_tiles(in0_cb_id, in1_cb_id, 0, 0, 0);
         mul_count++;
         pack_tile(0, eltwise_mul_partials_cb_cb_id);
-        REL();
+        REL();  // release_dst()
         cb_push_back(eltwise_mul_partials_cb_cb_id, 1);
         cb_pop_front(in0_cb_id, 1);
         cb_pop_front(in1_cb_id, 1);
@@ -83,21 +83,27 @@ inline void eltwise_mul_and_add_block_v2(
             add_tiles_init(eltwise_mul_partials_cb_cb_id, out_cb_id);
             cb_wait_front(eltwise_mul_partials_cb_cb_id, 1);
             cb_wait_front(out_cb_id, 1);
-            ACQ();
-            add_tiles(eltwise_mul_partials_cb_cb_id, out_cb_id, 0, 0, 0);
+            ACQ();  //
+            add_tiles(
+                eltwise_mul_partials_cb_cb_id,
+                out_cb_id,
+                0,
+                0,
+                0);  // DST REG의 0번째 tile에 eltwise_mul_partials_cb_cb_id의 0번째 tile과 out_cb_id의 0번째 tile을
+                     // 더해서 저장
             add_count++;
-            pack_tile(0, temp_sum_cb);
-            REL();
+            pack_tile(0, temp_sum_cb);  // DST REG로부터 single tile 복사해서 temp_sum_cb로 저장
+            REL();                      //
             cb_push_back(temp_sum_cb, 1);
             cb_pop_front(eltwise_mul_partials_cb_cb_id, 1);
-            cb_pop_front(out_cb_id, 1);
+            cb_pop_front(out_cb_id, 1);  //
 
-            copy_tile_to_dst_init_short(temp_sum_cb);
+            copy_tile_to_dst_init_short(temp_sum_cb);  // temp_sum_cb의 tile을 DST REG로 복사
             ACQ();
-            cb_wait_front(temp_sum_cb, 1);
-            cb_reserve_back(out_cb_id, 1);
-            copy_tile(temp_sum_cb, 0, 0);
-            pack_tile(0, out_cb_id);
+            cb_wait_front(temp_sum_cb, 1);  // temp_sum_cb의 tile 1개가 들어오길 기다림
+            cb_reserve_back(out_cb_id, 1);  // out_cb_id에 tile을 추가할 수 있는지 확인
+            copy_tile(temp_sum_cb, 0, 0);   // temp_sum_cb의 tile을 DST REG의 0번째 tile에 복사
+            pack_tile(0, out_cb_id);        // DST REG의 0번째 tile을 out_cb_id에 pack
             REL();
             cb_push_back(out_cb_id, 1);
             cb_pop_front(temp_sum_cb, 1);
@@ -153,7 +159,9 @@ void MAIN {
     constexpr uint32_t in0_num_subblocks_read = in0_num_subblocks;
 
     constexpr uint32_t num_blocks = in0_num_blocks_h * in0_num_blocks_w;  // num_tokens window
-
+    DPRINT << "num_blocks: " << num_blocks << ENDL();
+    DPRINT << "in0_num_blocks_h: " << in0_num_blocks_h << ENDL();
+    DPRINT << "in0_num_blocks_w: " << in0_num_blocks_w << ENDL();
     binary_op_init_common(in0_cb_id, in1_cb_id, out_cb_id);
 
     for (uint32_t in0_block_h_i = 0; in0_block_h_i < in0_num_blocks_h; ++in0_block_h_i) {
@@ -173,7 +181,7 @@ void MAIN {
                 temp_sum_cb,
                 out_cb_id,
                 in0_block_num_tiles,
-                i,
+                i,  // block index
                 num_blocks);
 
         }  // for in0_num_blocks_h

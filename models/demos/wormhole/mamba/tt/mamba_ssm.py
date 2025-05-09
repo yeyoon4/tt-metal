@@ -189,6 +189,7 @@ class TtMambaSSM(torch.nn.Module):
             memory_config=ttnn.L1_MEMORY_CONFIG,
         )
         ttnn.deallocate(abar1)
+        print(f"abar2: {abar2.shape}")  ##
 
         # B
         B0 = ttnn.linear(
@@ -219,6 +220,7 @@ class TtMambaSSM(torch.nn.Module):
             dtype=self.configs["dtype"]["activations"],
             math_fidelity=self.eltwise_math_fidelity,
         )
+        print(f"bmulx0: {bmulx0.shape}")  ##
 
         # deallocate bbar
         ttnn.deallocate(bbar0)
@@ -253,10 +255,13 @@ class TtMambaSSM(torch.nn.Module):
                 self.hidden_state_cache.get(self.configs["current_user"], 0),
                 memory_config=self.configs["sharded_prev_hidden"],
             )
+            print(f"prev_hidden_state: {prev_hidden_state.shape}")  ##
             abar2_sharded = ttnn.to_memory_config(abar2, self.configs["sharded_scan"])
             ttnn.deallocate(abar2)
+            print(f"abar2_sharded: {abar2_sharded.shape}")  ##
             bmulx0_sharded = ttnn.to_memory_config(bmulx0, self.configs["sharded_scan"])
             ttnn.deallocate(bmulx0)
+            print(f"bmulx0_sharded: {bmulx0_sharded.shape}")  ##
 
             start_prefix_time = time.time()  ##
             signpost(header="Prefix Scan", message="prefix scan start")
@@ -268,6 +273,7 @@ class TtMambaSSM(torch.nn.Module):
                 dtype=ttnn.bfloat8_b,
                 math_fidelity=ttnn.MathFidelity.HiFi3,
             )
+            print(f"hidden_states_sharded: {hidden_states_sharded.shape}")  ##
             end_prefix_time = time.time()  ##
             print(f"Prefix scan time: {end_prefix_time - start_prefix_time}s")  ##
             signpost(header="Prefix Scan_end", message="prefix scan end")

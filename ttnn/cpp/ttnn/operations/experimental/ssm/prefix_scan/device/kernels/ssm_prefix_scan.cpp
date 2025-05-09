@@ -64,7 +64,7 @@ FORCE_INLINE void pack_block_tiles_into_rows(uint32_t cb_in, uint32_t cb_out, ui
     tilize_uninit(cb_in, cb_out);
 }
 
-FORCE_INLINE void mul(uint32_t cb_a, uint32_t cb_b, uint32_t cb_out) {
+FORCE_INLINE void mul(uint32_t cb_a, uint32_t cb_b, uint32_t cb_out) {  // cb_a, cb_h_prev, cb_ah
     reconfig_data_format(cb_a, cb_b);
     pack_reconfig_data_format(cb_out);
 
@@ -72,16 +72,18 @@ FORCE_INLINE void mul(uint32_t cb_a, uint32_t cb_b, uint32_t cb_out) {
 
     cb_wait_front(cb_a, 1);
     cb_wait_front(cb_b, 1);
-    cb_reserve_back(cb_out, 1);
+    cb_reserve_back(cb_out, 1);  // buffer에 타일 공간이 확보되어 있는지 확인
 
     tile_regs_acquire();
     mul_tiles(cb_a, cb_b, 0, 0, 0);
     tile_regs_commit();
     tile_regs_wait();
-    pack_tile(0, cb_out);
+    pack_tile(
+        0,
+        cb_out);  // pack_tile(ifrom_dst, icb) -> DST register buffer로부터 single tile 복사해서 지정된 index cb로 pack
     tile_regs_release();
 
-    cb_push_back(cb_out, 1);
+    cb_push_back(cb_out, 1);  // (cbid, ntiles) -> CB queue 뒤에 tile 추가 -> consumer가 타일을 볼 수 있도록
     cb_pop_front(cb_a, 1);
     cb_pop_front(cb_b, 1);
 }
@@ -156,7 +158,7 @@ void MAIN {
     const uint32_t total_tiles_per_col = get_arg_val<uint32_t>(2);
     const uint32_t num_chunks_per_row = get_arg_val<uint32_t>(3);
 
-    binary_op_init_common(cb_a_in, cb_bx_in, cb_out);
+    binary_op_init_common(cb_a_in, cb_bx_in, cb_out);  // (identifier of the CB, .. , ..)
     const uint32_t num_tiles_last_chunk = total_tiles_per_row % NUM_TILES_IN_TILIZED_CHUNK == 0
                                               ? NUM_TILES_IN_TILIZED_CHUNK
                                               : total_tiles_per_row % NUM_TILES_IN_TILIZED_CHUNK;
