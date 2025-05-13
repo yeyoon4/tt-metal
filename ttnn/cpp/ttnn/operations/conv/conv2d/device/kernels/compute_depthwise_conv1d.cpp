@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <cstdint>
+#include "debug/dprint.h"
 
 #include "mod_div_lib.h"
 #include "compute_kernel_api/tilize.h"
@@ -18,7 +19,12 @@
 #include "compute_kernel_api/eltwise_unary/sfpu_split_includes.h"
 #include "compute_kernel_api/eltwise_binary.h"
 
-#define DEBUG_PRINT 0
+#define DEBUG_PRINT 1
+
+// #include <tt-metalium/host_api.hpp>
+// #include <tt-metalium/device.hpp>
+// #include <tt-metalium/bfloat16.hpp>
+// using namespace tt::tt_metal;
 
 ALWI void ACQ() { acquire_dst(); }
 ALWI void REL() { release_dst(); }
@@ -48,6 +54,8 @@ inline void eltwise_mul_and_add_block_v2(
     uint32_t idx,
     uint32_t total_blocks) {
     uint32_t last_block_idx = total_blocks - 1;
+    uint32_t mul_count = 0;
+    uint32_t add_count = 0;
     for (uint32_t i = 0; i < block_num_tiles; i++) {
         cb_wait_front(in1_cb_id, 1);
         cb_wait_front(in0_cb_id, 1);
@@ -55,6 +63,7 @@ inline void eltwise_mul_and_add_block_v2(
         mul_tiles_init(in0_cb_id, in1_cb_id);
         ACQ();
         mul_tiles(in0_cb_id, in1_cb_id, 0, 0, 0);
+        mul_count++;
         pack_tile(0, eltwise_mul_partials_cb_cb_id);
         REL();
         cb_push_back(eltwise_mul_partials_cb_cb_id, 1);
@@ -76,6 +85,7 @@ inline void eltwise_mul_and_add_block_v2(
             cb_wait_front(out_cb_id, 1);
             ACQ();
             add_tiles(eltwise_mul_partials_cb_cb_id, out_cb_id, 0, 0, 0);
+            add_count++;
             pack_tile(0, temp_sum_cb);
             REL();
             cb_push_back(temp_sum_cb, 1);
@@ -93,6 +103,15 @@ inline void eltwise_mul_and_add_block_v2(
             cb_pop_front(temp_sum_cb, 1);
         }
     }
+    DPRINT << "conv mul count: " << mul_count << ENDL();
+    DPRINT << "conv add count: " << add_count << ENDL();
+    // std::cout << "mul count: " << mul_count << std::endl;
+    // std::cout << "add count: " << add_count << std::endl;
+    // // if constexpr (DEBUG_PRINT) {
+    // //     tt::log_info("MUL count: {}", mul_count);
+    // //     tt::log_info("ADD count: {}", add_count);
+
+    // // }
 }
 
 namespace NAMESPACE {

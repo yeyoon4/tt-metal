@@ -2,16 +2,17 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
+import time
 from typing import Callable
 
 import torch
-import time
 
 import ttnn
 from models.demos.wormhole.mamba.reference.args import ModelArgs, ModelMode
 from models.demos.wormhole.mamba.tt.cache import TensorCache
 from models.demos.wormhole.mamba.tt.mamba_conv import MambaConv, MambaConvConfig
 from models.demos.wormhole.mamba.tt.mamba_ssm import TtMambaSSM
+from tracy import signpost
 
 
 class TtMambaBlock(torch.nn.Module):
@@ -124,6 +125,7 @@ class TtMambaBlock(torch.nn.Module):
         elif self.configs["mode"] == ModelMode.DECODE:
             print("Mode is decode")
 
+        signpost(header="mamba_block_forward", message="mamba block forward start")
         start_forward_time = time.time()
         residual = ttnn.linear(
             x,
@@ -243,6 +245,7 @@ class TtMambaBlock(torch.nn.Module):
         ttnn.deallocate(out)
         end_forward_time = time.time()
         print(f"Forward time: {end_forward_time - start_forward_time}s")
+        signpost(header="mamba_block_forward_end", message="mamba block forward end")
 
         return out_proj
 

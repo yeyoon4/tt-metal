@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "prefix_scan_program_factory.hpp"
-
+#include "iostream"
 #include "ttnn/tensor/tensor.hpp"
 
 using namespace tt::tt_metal;
@@ -50,6 +50,9 @@ operation::ProgramWithCallbacks multi_core_ssm_prefix_scan(
 
     const uint32_t sharded_sequence_length = a.shard_spec()->shape[0];
     const uint32_t sharded_hidden_state_length = a.shard_spec()->shape[1];
+
+    std::cout << "sharded_sequence_length: " << sharded_sequence_length << std::endl;
+    std::cout << "sharded_hidden_state_length: " << sharded_hidden_state_length << std::endl;
 
     const uint32_t total_tiles_per_row = sharded_hidden_state_length / TILE_HEIGHT;
     const uint32_t total_tiles_per_col = sharded_sequence_length / TILE_HEIGHT;

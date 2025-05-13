@@ -52,11 +52,11 @@ from einops import einsum, rearrange, repeat
 from models.demos.wormhole.mamba.reference.args import ModelArgs, ModelMode
 
 MambaPretrainedModelName = Literal[
-    "state-spaces/mamba-2.8b-slimpj",
-    "state-spaces/mamba-2.8b",
-    "state-spaces/mamba-1.4b",
-    "state-spaces/mamba-790m",
-    "state-spaces/mamba-370m",
+    # "state-spaces/mamba-2.8b-slimpj",
+    # "state-spaces/mamba-2.8b",
+    # "state-spaces/mamba-1.4b",
+    # "state-spaces/mamba-790m",
+    # "state-spaces/mamba-370m",
     "state-spaces/mamba-130m",
 ]
 
@@ -422,6 +422,7 @@ class MambaBlock(nn.Module):
         # is additionally hardware-aware (like FlashAttention).
         x = torch.zeros((b, d_in, n), device=deltaA.device)
         ys = []
+        # print("the sequence length is", l)
         for i in range(l):
             self.prev_hidden_states = deltaA[:, i] * self.prev_hidden_states + deltaB_u[:, i]
             y = einsum(self.prev_hidden_states, C[:, i, :], "b d_in n, b n -> b d_in")
